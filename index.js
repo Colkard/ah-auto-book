@@ -2,7 +2,7 @@ const request = require('request');
 const moment = require('moment');
 var _ = require('lodash');
 
-var Password = require('./Password');
+var Password = require('./Password').password;
 var aCookies;
 var loginAH = (sMail, sPW, fnSuccess) => {
   request({
@@ -24,7 +24,7 @@ var loginAH = (sMail, sPW, fnSuccess) => {
   })
 };
 
-var getBookings = (sDate, fnSuccess) => {
+var getBookings = (sDate, fnSuccess, fnError) => {
   request({
     url: `https://crossfitboxcastelldefels.aimharder.com/api/bookings?day=${sDate}&familyId=&box=9283&_=${moment().valueOf()}`,
     jar: true,
@@ -34,12 +34,18 @@ var getBookings = (sDate, fnSuccess) => {
     }
   })
   .on('response', function(res) {
-    console.log('get booking STATUS: ' + res.statusCode);
+    console.log(`${sDate} get booking STATUS: ${res.statusCode}`);
     res.setEncoding('utf8');
+
+    var body = '';
     res.on('data', function (chunk) {
-      var oData = JSON.parse(chunk);
-      console.log(oData);
-      fnSuccess(oData.bookings);
+      body += chunk;
+    });
+
+    res.on('end', function () {
+      var oData = JSON.parse(body);
+      if (oData.bookings && oData.bookings.length) fnSuccess(oData.bookings);
+      else if (oData.bookings && !oData.bookings.length) fnError("No classes available");
     });
   })
 }
@@ -65,32 +71,42 @@ var bookClass = (sClassID, sBookDay, fnSuccess) => {
 
 var aDaysToBook = [
   {
-    1: "21:00 - 22:00"
+    Day: 1,
+    Time: "21:00 - 22:00"
   },
   {
-    2: "21:00 - 22:00"
+    Day: 2,
+    Time: "21:00 - 22:00"
   },
   {
-    3: "20:30 - 21:30"
+    Day: 3,
+    Time: "20:30 - 21:30"
   },
   {
-    4: "20:30 - 21:30"
+    Day: 4,
+    Time: "20:30 - 21:30"
   },
   {
-    5: "18:30 - 19:30"
+    Day: 5,
+    Time: "18:30 - 19:30"
   },
 ]
 
-loginAH("colkard96@gmail.com", Constants.password, function(res) {
-  //TODO logic book days
-  var sBookDay = moment().add("days", 1).format("YYYYMMDD");
-  var date = moment();
-  var dow = date.day();
-  console.log(dow);
-  getBookings(sBookDay, aAvailableClasses => {
-      var oClass = _.find(aAvailableClasses, element => element.time === "12:00 - 13:30");
-      if (!oClass) return;
-      if (!oClass.bookState) bookClass(oClass.id, sBookDay, () => console.log("Dia reservado"));
-      //bookClass(oClass.id, sBookDay, () => console.log("Dia reservado"));
-  })
+var iCountDaysToBook = 3;
+
+loginAH("colkard96@gmail.com", Password, function(res) {
+  for (var i = 0; i <= iCountDaysToBook; i++) {
+    var oBookDay = moment().add(i, "days");
+    var iForwardDay = oBookDay.day();
+    var sBookDay = oBookDay.format("YYYYMMDD");
+    ((oBookDay, iForwardDay, sBookDay) => {
+      getBookings(sBookDay, aAvailableClasses => {
+          var oTimeToBook = _.find(aDaysToBook, element => element.Day === iForwardDay);
+          if (!oTimeToBook) return;
+          var oClass = _.find(aAvailableClasses, element => element.time === oTimeToBook.Time);
+          if (!oClass) return;
+          if (!oClass.bookState) bookClass(oClass.id, sBookDay, () => console.log(`Dia ${oBookDay.format("DD-MM-YYYY")} reservado durante ${oTimeToBook.Time}.`));
+      }, console.error)
+    })(oBookDay, iForwardDay, sBookDay)
+  }
 })
