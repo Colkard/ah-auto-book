@@ -1,0 +1,17 @@
+{
+  "name": "aimharderproyect",
+  "version": "1.0.0",
+  "description": "",
+  "main": "src/index.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "author": "",
+  "license": "ISC",
+  "dependencies": {
+    "lodash": "^4.17.11",
+    "moment": "^2.23.0",
+    "request": "^2.88.0"
+  },
+  "devDependencies": {}
+}
