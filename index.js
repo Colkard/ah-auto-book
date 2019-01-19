@@ -72,7 +72,7 @@ var bookClass = (sClassID, sBookDay, fnSuccess) => {
   .on('response', fnSuccess)
 }
 
-const job = new CronJob('45 17 * * *', function() {
+const job = new CronJob(config.sCrontab, function() {
   console.log(moment().format("HH:mm:ss"))
   loginAH((res) => {
     for (var i = 0; i <= config.iCountDaysToBook; i++) {

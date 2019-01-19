@@ -3,6 +3,7 @@ module.exports = {
   login_url: 'https://aimharder.com/login',
   login_email: 'colkard96@gmail.com',
   iCountDaysToBook: 3,
+  sCrontab: "50 17 * * *",
   iBoxID: "9283",
   aDaysToBook: [
     {
