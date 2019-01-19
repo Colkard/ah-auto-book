@@ -1,20 +1,23 @@
 const request = require('request');
 const moment = require('moment');
+var CronJob = require('cron').CronJob;
 var _ = require('lodash');
 
 var Password = require('./Password').password;
+var config = require('./Config');
+
 var aCookies;
-var loginAH = (sMail, sPW, fnSuccess) => {
+var loginAH = fnSuccess => {
   request({
-    url: `https://aimharder.com/login`,
+    url: config.login_url,
     jar: true,
     method: "POST",
     headers: {
       "Content-Type": "application/x-www-form-urlencoded"
     },
     form: {
-      "mail": sMail,
-      "pw": sPW,
+      "mail": config.login_email,
+      "pw": Password,
       "login": "Iniciar sesión"
     }
   })
@@ -26,7 +29,7 @@ var loginAH = (sMail, sPW, fnSuccess) => {
 
 var getBookings = (sDate, fnSuccess, fnError) => {
   request({
-    url: `https://crossfitboxcastelldefels.aimharder.com/api/bookings?day=${sDate}&familyId=&box=9283&_=${moment().valueOf()}`,
+    url: `${config.api_url}/bookings?day=${sDate}&familyId=&box=${config.iBoxID}&_=${moment().valueOf()}`,
     jar: true,
     method: "GET",
     headers: {
@@ -52,7 +55,7 @@ var getBookings = (sDate, fnSuccess, fnError) => {
 
 var bookClass = (sClassID, sBookDay, fnSuccess) => {
   request({
-    url: `https://crossfitboxcastelldefels.aimharder.com/api/book`,
+    url: `${config.api_url}/book`,
     jar: true,
     method: "POST",
     headers: {
@@ -69,44 +72,24 @@ var bookClass = (sClassID, sBookDay, fnSuccess) => {
   .on('response', fnSuccess)
 }
 
-var aDaysToBook = [
-  {
-    Day: 1,
-    Time: "21:00 - 22:00"
-  },
-  {
-    Day: 2,
-    Time: "21:00 - 22:00"
-  },
-  {
-    Day: 3,
-    Time: "20:30 - 21:30"
-  },
-  {
-    Day: 4,
-    Time: "20:30 - 21:30"
-  },
-  {
-    Day: 5,
-    Time: "18:30 - 19:30"
-  },
-]
+const job = new CronJob('45 17 * * *', function() {
+  console.log(moment().format("HH:mm:ss"))
+  loginAH((res) => {
+    for (var i = 0; i <= config.iCountDaysToBook; i++) {
+      var oBookDay = moment().add(i, "days");
+      var iForwardDay = oBookDay.day();
+      var sBookDay = oBookDay.format("YYYYMMDD");
+      ((oBookDay, iForwardDay, sBookDay) => {
+        getBookings(sBookDay, aAvailableClasses => {
+            var oTimeToBook = _.find(config.aDaysToBook, element => element.Day === iForwardDay);
+            if (!oTimeToBook) return;
+            var oClass = _.find(aAvailableClasses, element => element.time === oTimeToBook.Time);
+            if (!oClass) return;
+            if (!oClass.bookState) bookClass(oClass.id, sBookDay, () => console.log(`Dia ${oBookDay.format("DD-MM-YYYY")} reservado durante ${oTimeToBook.Time}.`));
+        }, console.error)
+      })(oBookDay, iForwardDay, sBookDay)
+    }
+  })
+});
 
-var iCountDaysToBook = 3;
-
-loginAH("colkard96@gmail.com", Password, function(res) {
-  for (var i = 0; i <= iCountDaysToBook; i++) {
-    var oBookDay = moment().add(i, "days");
-    var iForwardDay = oBookDay.day();
-    var sBookDay = oBookDay.format("YYYYMMDD");
-    ((oBookDay, iForwardDay, sBookDay) => {
-      getBookings(sBookDay, aAvailableClasses => {
-          var oTimeToBook = _.find(aDaysToBook, element => element.Day === iForwardDay);
-          if (!oTimeToBook) return;
-          var oClass = _.find(aAvailableClasses, element => element.time === oTimeToBook.Time);
-          if (!oClass) return;
-          if (!oClass.bookState) bookClass(oClass.id, sBookDay, () => console.log(`Dia ${oBookDay.format("DD-MM-YYYY")} reservado durante ${oTimeToBook.Time}.`));
-      }, console.error)
-    })(oBookDay, iForwardDay, sBookDay)
-  }
-})
+job.start();
