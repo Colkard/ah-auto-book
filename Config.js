@@ -1,9 +1,8 @@
 module.exports = {
   api_url: 'https://crossfitboxcastelldefels.aimharder.com/api',
   login_url: 'https://aimharder.com/login',
-  login_email: 'colkard96@gmail.com',
   iCountDaysToBook: 3,
-  sCrontab: "50 17 * * *",
+  sCrontab: "*/2 * * * *",
   iBoxID: "9283",
   aDaysToBook: [
     {

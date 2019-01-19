@@ -3,7 +3,6 @@ const moment = require('moment');
 var CronJob = require('cron').CronJob;
 var _ = require('lodash');
 
-var Password = require('./Password').password;
 var config = require('./Config');
 
 var aCookies;
@@ -16,8 +15,8 @@ var loginAH = fnSuccess => {
       "Content-Type": "application/x-www-form-urlencoded"
     },
     form: {
-      "mail": config.login_email,
-      "pw": Password,
+      "mail": process.env.email,
+      "pw": process.env.pass,
       "login": "Iniciar sesión"
     }
   })
