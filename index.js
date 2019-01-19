@@ -73,7 +73,7 @@ var bookClass = (sClassID, sBookDay, fnSuccess) => {
   .on('response', fnSuccess)
 }
 
-app.listen(process.env.PORT || 4000, function(){
+app.listen(process.env.PORT, function(){
   const job = new CronJob(config.sCrontab, function() {
     console.log(moment().format("HH:mm:ss"))
     loginAH((res) => {
