@@ -71,6 +71,7 @@ var bookClass = (sClassID, sBookDay, fnSuccess) => {
   .on('response', fnSuccess)
 }
 
+console.log("App Started");
 const job = new CronJob(config.sCrontab, function() {
   console.log(moment().format("HH:mm:ss"))
   loginAH((res) => {
