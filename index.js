@@ -1,5 +1,3 @@
-const express = require('express');
-const app = express();
 const request = require('request');
 const moment = require('moment');
 var CronJob = require('cron').CronJob;
@@ -73,26 +71,24 @@ var bookClass = (sClassID, sBookDay, fnSuccess) => {
   .on('response', fnSuccess)
 }
 
-app.listen(process.env.PORT, function(){
-  const job = new CronJob(config.sCrontab, function() {
-    console.log(moment().format("HH:mm:ss"))
-    loginAH((res) => {
-      for (var i = 0; i <= config.iCountDaysToBook; i++) {
-        var oBookDay = moment().add(i, "days");
-        var iForwardDay = oBookDay.day();
-        var sBookDay = oBookDay.format("YYYYMMDD");
-        ((oBookDay, iForwardDay, sBookDay) => {
-          getBookings(sBookDay, aAvailableClasses => {
-              var oTimeToBook = _.find(config.aDaysToBook, element => element.Day === iForwardDay);
-              if (!oTimeToBook) return;
-              var oClass = _.find(aAvailableClasses, element => element.time === oTimeToBook.Time);
-              if (!oClass) return;
-              if (!oClass.bookState) bookClass(oClass.id, sBookDay, () => console.log(`Dia ${oBookDay.format("DD-MM-YYYY")} reservado durante ${oTimeToBook.Time}.`));
-          }, console.error)
-        })(oBookDay, iForwardDay, sBookDay)
-      }
-    })
-  });
-
-  job.start();
+const job = new CronJob(config.sCrontab, function() {
+  console.log(moment().format("HH:mm:ss"))
+  loginAH((res) => {
+    for (var i = 0; i <= config.iCountDaysToBook; i++) {
+      var oBookDay = moment().add(i, "days");
+      var iForwardDay = oBookDay.day();
+      var sBookDay = oBookDay.format("YYYYMMDD");
+      ((oBookDay, iForwardDay, sBookDay) => {
+        getBookings(sBookDay, aAvailableClasses => {
+            var oTimeToBook = _.find(config.aDaysToBook, element => element.Day === iForwardDay);
+            if (!oTimeToBook) return;
+            var oClass = _.find(aAvailableClasses, element => element.time === oTimeToBook.Time);
+            if (!oClass) return;
+            if (!oClass.bookState) bookClass(oClass.id, sBookDay, () => console.log(`Dia ${oBookDay.format("DD-MM-YYYY")} reservado durante ${oTimeToBook.Time}.`));
+        }, console.error)
+      })(oBookDay, iForwardDay, sBookDay)
+    }
+  })
 });
+
+job.start();
