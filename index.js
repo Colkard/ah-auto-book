@@ -1,6 +1,5 @@
 const request = require('request');
 const moment = require('moment');
-var CronJob = require('cron').CronJob;
 var _ = require('lodash');
 
 var config = require('./Config');
@@ -71,8 +70,6 @@ var bookClass = (sClassID, sBookDay, fnSuccess) => {
   .on('response', fnSuccess)
 }
 
-console.log("App Started");
-const job = new CronJob(config.sCrontab, function() {
   console.log(moment().format("HH:mm:ss"))
   loginAH((res) => {
     for (var i = 0; i <= config.iCountDaysToBook; i++) {
@@ -90,6 +87,4 @@ const job = new CronJob(config.sCrontab, function() {
       })(oBookDay, iForwardDay, sBookDay)
     }
   })
-});
 
-job.start();
