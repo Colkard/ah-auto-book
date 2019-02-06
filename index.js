@@ -1,11 +1,11 @@
 const request = require('request');
 const moment = require('moment');
-var _ = require('lodash');
+let _ = require('lodash');
 
-var config = require('./Config');
+let config = require('./Config');
 
-var aCookies;
-var loginAH = fnSuccess => {
+let aCookies;
+let loginAH = fnSuccess => {
     request({
         url: config.login_url,
         jar: true,
@@ -25,7 +25,7 @@ var loginAH = fnSuccess => {
         })
 };
 
-var getBookings = (sDate, fnSuccess, fnError) => {
+let getBookings = (sDate, fnSuccess, fnError) => {
     request({
         url: `${config.api_url}/bookings?day=${sDate}&familyId=&box=${config.iBoxID}&_=${moment().valueOf()}`,
         jar: true,
@@ -38,20 +38,20 @@ var getBookings = (sDate, fnSuccess, fnError) => {
             console.log(`${sDate} get booking STATUS: ${res.statusCode}`);
             res.setEncoding('utf8');
 
-            var body = '';
+            let body = '';
             res.on('data', function (chunk) {
                 body += chunk;
             });
 
             res.on('end', function () {
-                var oData = JSON.parse(body);
+                let oData = JSON.parse(body);
                 if (oData.bookings && oData.bookings.length) fnSuccess(oData.bookings);
                 else if (oData.bookings && !oData.bookings.length) fnError("No classes available");
             });
         })
 }
 
-var bookClass = (sClassID, sBookDay, fnSuccess) => {
+let bookClass = (sClassID, sBookDay, fnSuccess) => {
     request({
         url: `${config.api_url}/book`,
         jar: true,
@@ -71,15 +71,15 @@ var bookClass = (sClassID, sBookDay, fnSuccess) => {
 
 console.log(moment().format("HH:mm:ss"))
 loginAH(res => {
-    for (var i = 0; i <= config.iCountDaysToBook; i++) {
-        var oBookDay = moment().add(i, "days");
-        var iForwardDay = oBookDay.day();
-        var sBookDay = oBookDay.format("YYYYMMDD");
+    for (let i = 0; i <= config.iCountDaysToBook; i++) {
+        let oBookDay = moment().add(i, "days");
+        let iForwardDay = oBookDay.day();
+        let sBookDay = oBookDay.format("YYYYMMDD");
         ((oBookDay, iForwardDay, sBookDay) => {
             getBookings(sBookDay, aAvailableClasses => {
-                var oTimeToBook = _.find(config.aDaysToBook, element => element.Day === iForwardDay);
+                let oTimeToBook = _.find(config.aDaysToBook, element => element.Day === iForwardDay);
                 if (!oTimeToBook) return;
-                var oClass = _.find(aAvailableClasses, element => element.time === oTimeToBook.Time && element.className === oTimeToBook.ClassName);
+                let oClass = _.find(aAvailableClasses, element => element.time === oTimeToBook.Time && element.className === oTimeToBook.ClassName);
                 if (!oClass) return;
                 if (!oClass.bookState) bookClass(oClass.id, sBookDay, () => console.log(`Dia ${oBookDay.format("DD-MM-YYYY")} reservado durante ${oTimeToBook.Time}.`));
             }, console.error)
