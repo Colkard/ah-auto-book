@@ -1,10 +1,19 @@
 const request = require('request');
 const moment = require('moment');
+const nodemailer = require('nodemailer');
 let _ = require('lodash');
 
 let config = require('./Config');
 
-let aCookies;
+const transporter = nodemailer.createTransport({
+    service: 'gmail',
+    auth: {
+        user: process.env.email_debug,
+        pass: process.env.pass_debug
+    }
+});
+
+let aCookies, sLog;
 let loginAH = fnSuccess => {
     request({
         url: config.login_url,
@@ -49,7 +58,7 @@ let getBookings = (sDate, fnSuccess, fnError) => {
                 else if (oData.bookings && !oData.bookings.length) fnError("No classes available");
             });
         })
-}
+};
 
 let bookClass = (sClassID, sBookDay, fnSuccess) => {
     request({
@@ -69,21 +78,50 @@ let bookClass = (sClassID, sBookDay, fnSuccess) => {
     }).on('response', fnSuccess)
 };
 
-console.log(moment().format("HH:mm:ss"))
+console.log(moment().format("HH:mm:ss"));
 loginAH(res => {
+    let aPromises = [Promise.resolve];
     for (let i = 0; i <= config.iCountDaysToBook; i++) {
         let oBookDay = moment().add(i, "days");
         let iForwardDay = oBookDay.day();
         let sBookDay = oBookDay.format("YYYYMMDD");
-        ((oBookDay, iForwardDay, sBookDay) => {
-            getBookings(sBookDay, aAvailableClasses => {
-                let oTimeToBook = _.find(config.aDaysToBook, element => element.Day === iForwardDay);
-                if (!oTimeToBook) return;
-                let oClass = _.find(aAvailableClasses, element => element.time === oTimeToBook.Time && element.className === oTimeToBook.ClassName);
-                if (!oClass) return;
-                if (!oClass.bookState) bookClass(oClass.id, sBookDay, () => console.log(`Dia ${oBookDay.format("DD-MM-YYYY")} reservado durante ${oTimeToBook.Time}.`));
-            }, console.error)
-        })(oBookDay, iForwardDay, sBookDay)
+        aPromises.push(new Promise(resolve => {
+            ((oBookDay, iForwardDay, sBookDay) => {
+                getBookings(sBookDay, aAvailableClasses => {
+                    let oTimeToBook = _.find(config.aDaysToBook, element => element.Day === iForwardDay);
+                    if (!oTimeToBook) return;
+                    let oClass = _.find(aAvailableClasses, element => element.time === oTimeToBook.Time && element.className === oTimeToBook.ClassName);
+                    if (!oClass) return;
+                    if (!oClass.bookState) {
+                        bookClass(oClass.id, sBookDay, () => {
+                            let lastLog = `Dia ${oBookDay.format("DD-MM-YYYY")} reservado durante ${oTimeToBook.Time}.`;
+                            console.log(lastLog);
+                            resolve({
+                                consoleLog: lastLog,
+                                sBookDay: sBookDay,
+                                oClass: oClass,
+                                oTimeToBook: oTimeToBook,
+                                aAvailableClasses: aAvailableClasses
+                            });
+                        });
+                    }
+                }, console.error)
+            })(oBookDay, iForwardDay, sBookDay)
+        }));
     }
+    Promise.all(aPromises).then(aResValues => {
+        transporter.sendMail({
+            from: process.env.email_debug,
+            to: process.env.email_debug,
+            subject: 'Debug Log AH-Auto-Book',
+            text: JSON.stringify(aResValues, null, 4)
+        }, function(error, info){
+            if (error) {
+                console.log(error);
+            } else {
+                console.log('Email sent: ' + info.response);
+            }
+        });
+    })
 });
 
