@@ -6,9 +6,7 @@ let _ = require('lodash');
 let config = require('./Config');
 
 const transporter = nodemailer.createTransport({
-    host: 'smtp.gmail.com',
-    port: 25,
-    secure: true,
+    service: 'gmail',
     auth: {
         user: process.env.email_debug,
         pass: process.env.pass_debug
