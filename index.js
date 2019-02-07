@@ -34,7 +34,7 @@ let loginAH = fnSuccess => {
         })
 };
 
-let getBookings = (sDate, fnSuccess, fnError) => {
+let getBookings = (sDate, resolve, fnSuccess, fnError) => {
     request({
         url: `${config.api_url}/bookings?day=${sDate}&familyId=&box=${config.iBoxID}&_=${moment().valueOf()}`,
         jar: true,
@@ -55,7 +55,10 @@ let getBookings = (sDate, fnSuccess, fnError) => {
             res.on('end', function () {
                 let oData = JSON.parse(body);
                 if (oData.bookings && oData.bookings.length) fnSuccess(oData.bookings);
-                else if (oData.bookings && !oData.bookings.length) fnError("No classes available");
+                else if (oData.bookings && !oData.bookings.length) {
+                    fnError("No classes available");
+                    resolve();
+                }
             });
         })
 };
@@ -87,11 +90,17 @@ loginAH(res => {
         let sBookDay = oBookDay.format("YYYYMMDD");
         aPromises.push(new Promise(resolve => {
             ((oBookDay, iForwardDay, sBookDay) => {
-                getBookings(sBookDay, aAvailableClasses => {
+                getBookings(sBookDay, resolve, aAvailableClasses => {
                     let oTimeToBook = _.find(config.aDaysToBook, element => element.Day === iForwardDay);
-                    if (!oTimeToBook) return;
+                    if (!oTimeToBook) {
+                        resolve();
+                        return;
+                    }
                     let oClass = _.find(aAvailableClasses, element => element.time === oTimeToBook.Time && element.className === oTimeToBook.ClassName);
-                    if (!oClass) return;
+                    if (!oClass) {
+                        resolve();
+                        return;
+                    }
                     if (!oClass.bookState) {
                         bookClass(oClass.id, sBookDay, () => {
                             let lastLog = `Dia ${oBookDay.format("DD-MM-YYYY")} reservado durante ${oTimeToBook.Time}.`;
@@ -104,7 +113,7 @@ loginAH(res => {
                                 aAvailableClasses: aAvailableClasses
                             });
                         });
-                    }
+                    } else resolve();
                 }, console.error)
             })(oBookDay, iForwardDay, sBookDay)
         }));
