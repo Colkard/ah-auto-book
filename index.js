@@ -13,7 +13,7 @@ const transporter = nodemailer.createTransport({
     }
 });
 
-let aCookies, sLog;
+let aCookies;
 let loginAH = fnSuccess => {
     request({
         url: config.login_url,
