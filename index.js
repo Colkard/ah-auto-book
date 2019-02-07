@@ -1,11 +1,11 @@
 const request = require('request');
 const moment = require('moment');
-const nodemailer = require('nodemailer');
+var nodemailer = require('nodemailer');
 let _ = require('lodash');
 
 let config = require('./Config');
 
-const transporter = nodemailer.createTransport({
+var transporter = nodemailer.createTransport({
     host: 'smtp.gmail.com',
     port: 465,
     secure: true, // use SSL
