@@ -1,15 +1,22 @@
 const request = require('request');
 const moment = require('moment');
-const nodemailer = require('nodemailer-smtp-transport');
+const nodemailer = require('nodemailer');
 let _ = require('lodash');
 
 let config = require('./Config');
 
 const transporter = nodemailer.createTransport({
-    service: 'gmail',
+    host: 'smtp.gmail.com',
+    port: '587',
     auth: {
         user: process.env.email_debug,
         pass: process.env.pass_debug
+    },
+    secureConnection: 'false',
+    tls: {
+        ciphers: 'SSLv3',
+        rejectUnauthorized: false
+
     }
 });
 
