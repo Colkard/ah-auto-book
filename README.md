@@ -2,4 +2,4 @@
  
  Books on aimharder automatically on desired schedule at config.js file.
  
- Executes at "crontab variable" on config.js file.
+Execute this script from a nodejs server. Currently I am using tasker with termux plugin to run nodejs.
