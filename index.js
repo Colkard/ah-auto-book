@@ -1,24 +1,19 @@
 const request = require('request');
 const moment = require('moment');
-const nodemailer = require('nodemailer');
+
 let _ = require('lodash');
 
 let config = require('./Config');
 
-const transporter = nodemailer.createTransport({
-    host: 'smtp.gmail.com',
-    port: '587',
-    auth: {
-        user: process.env.email_debug,
-        pass: process.env.pass_debug
-    },
-    secureConnection: 'false',
-    tls: {
-        ciphers: 'SSLv3',
-        rejectUnauthorized: false
+var fs = require('fs');
+var util = require('util');
+var log_file = fs.createWriteStream(__dirname + '/debug.log', {flags : 'w'});
+var log_stdout = process.stdout;
 
-    }
-});
+console.log = function(d) { //
+    log_file.write(util.format(d) + '\n');
+    log_stdout.write(util.format(d) + '\n');
+};
 
 let aCookies;
 let loginAH = fnSuccess => {
@@ -126,18 +121,7 @@ loginAH(res => {
         }));
     }
     Promise.all(aPromises).then(aResValues => {
-        transporter.sendMail({
-            from: process.env.email_debug,
-            to: process.env.email_debug,
-            subject: 'Debug Log AH-Auto-Book',
-            text: JSON.stringify(aResValues, null, 4)
-        }, function(error, info){
-            if (error) {
-                console.log(error);
-            } else {
-                console.log('Email sent: ' + info.response);
-            }
-        });
+        console.log(JSON.stringify(aResValues, null, 4));
     })
 });
 
