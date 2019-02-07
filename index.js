@@ -122,6 +122,7 @@ loginAH(res => {
     }
     Promise.all(aPromises).then(aResValues => {
         console.log(JSON.stringify(aResValues, null, 4));
+        console.log("\n------------------------------------------\n");
     })
 });
 
