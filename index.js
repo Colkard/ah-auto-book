@@ -83,7 +83,7 @@ let bookClass = (sClassID, sBookDay, fnSuccess) => {
     }).on('response', fnSuccess)
 };
 
-console.log(moment().format("HH:mm:ss"));
+console.log(moment().format("DD/MM/YYYY - HH:mm:ss"));
 loginAH(res => {
     let aPromises = [Promise.resolve];
     for (let i = 0; i <= config.iCountDaysToBook; i++) {
